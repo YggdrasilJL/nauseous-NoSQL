@@ -1,4 +1,5 @@
-const Thought = require('../models/Thoughts');
+const Thought = require('../models/Thought');
+const User = require('../models/User');
 
 const { thoughtText, username, userId } = req.body;
 const thoughtId = req.params.id;
@@ -24,6 +25,11 @@ async function getSingleThought(req, res) {
 async function createThought(req, res) {
   try {
     const newThought = await Thought.create({ thoughtText, username, userId });
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { thoughts: newThought._id } },
+      { new: true }
+    );
     res.status(201).json({ message: 'Thought created!', newThought });
   } catch (err) {
     res.status(500).json(err);
@@ -35,14 +41,13 @@ async function updateThought(req, res) {
     const updatedThought = await Thought.findByIdAndUpdate(
       thoughtId,
       { thoughtText, username, userId },
-      {
-        new: true,
-      }
+      { new: true }
     );
-    res.status(200).json({ message: 'Thought updated!', updatedThought });
-    if (!updatedThought) {
-      return res.status(404).json({ message: 'Thought not found' });
-    }
+
+    const message = updatedThought
+      ? { message: 'thought updated', updatedThought }
+      : { message: 'thought not found' };
+    res.status(updatedThought ? 200 : 404).json(message);
   } catch (err) {
     res.status(500).json(err);
   }
@@ -51,7 +56,11 @@ async function updateThought(req, res) {
 async function deleteThought(req, res) {
   try {
     const deletedThought = await Thought.findByIdAndDelete(thoughtId);
-    res.status(200).json({ message: 'Thought deleted!', deletedThought });
+    const message = deletedThought
+      ? { message: 'thought deleted', deletedThought }
+      : { message: 'thought not found' };
+
+    res.status(deletedThought ? 200 : 404).json(message);
   } catch (err) {
     res.status(500).json(err);
   }
