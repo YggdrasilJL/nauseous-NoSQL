@@ -1,9 +1,6 @@
 const Thought = require('../models/Thought');
 const User = require('../models/User');
 
-const { thoughtText, username, userId } = req.body;
-const thoughtId = req.params.id;
-
 async function getAllThoughts(req, res) {
   try {
     const thoughts = await Thought.find();
@@ -15,7 +12,7 @@ async function getAllThoughts(req, res) {
 
 async function getSingleThought(req, res) {
   try {
-    const thought = await Thought.findById(thoughtId);
+    const thought = await Thought.findById(req.params.id);
     res.json(thought);
   } catch (err) {
     res.status(500).json(err);
@@ -24,6 +21,8 @@ async function getSingleThought(req, res) {
 
 async function createThought(req, res) {
   try {
+    const { thoughtText, username, userId } = req.body;
+
     const newThought = await Thought.create({ thoughtText, username, userId });
     await User.findByIdAndUpdate(
       userId,
@@ -38,8 +37,10 @@ async function createThought(req, res) {
 
 async function updateThought(req, res) {
   try {
+    const { thoughtText, username, userId } = req.body;
+
     const updatedThought = await Thought.findByIdAndUpdate(
-      thoughtId,
+      req.params.id,
       { thoughtText, username, userId },
       { new: true }
     );
@@ -55,7 +56,7 @@ async function updateThought(req, res) {
 
 async function deleteThought(req, res) {
   try {
-    const deletedThought = await Thought.findByIdAndDelete(thoughtId);
+    const deletedThought = await Thought.findByIdAndDelete(req.params.id);
     const message = deletedThought
       ? { message: 'thought deleted', deletedThought }
       : { message: 'thought not found' };
