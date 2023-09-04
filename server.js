@@ -13,4 +13,6 @@ db.once('open', () => {
   app.listen(PORT, () => {
     console.info(`API running on port ${PORT}`);
   });
+
+  // Note: Use "http://localhost:3001/api/(route name)" in insomnia requests.
 });
