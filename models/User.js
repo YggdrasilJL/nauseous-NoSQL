@@ -38,7 +38,9 @@ const userSchema = new Schema(
   }
 );
 
-userSchema.virtual('friendCount').get(() => {
+// don't use "() =>" because it doesn't have its own "this" context
+
+userSchema.virtual('friendCount').get(function () {
   return this.friends ? this.friends.length : 0;
 });
 

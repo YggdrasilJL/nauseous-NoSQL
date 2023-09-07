@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "seed": "node seeds/seed"
+    "seed": "node seeds/seed",
+    "start": "node server.js"
   },
   "dependencies": {
     "dayjs": "^1.11.9",

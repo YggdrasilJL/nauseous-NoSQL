@@ -71,12 +71,12 @@ async function deleteThought(req, res) {
 
 async function createReaction(req, res) {
   try {
-    // using add to set instead of push because addtoset doesnt allow duplications
     const thoughtData = await Thought.findOneAndUpdate(
       { _id: req.params.thoughtId },
-      { $addToSet: { reactions: req.body } },
+      { $push: { reactions: req.body } },
       { new: true }
     );
+
     !thoughtData
       ? res.status(404).json({ message: 'No thought found with that ID!' })
       : res.json(thoughtData);
@@ -87,16 +87,22 @@ async function createReaction(req, res) {
 
 async function deleteReaction(req, res) {
   try {
-    const thoughtData = await Thought.findOneAndUpdate(
-      { _id: req.params.thoughtId },
-      { $pull: { reactions: { reactionId: req.params.reactionId } } },
+    const thoughtData = await Thought.findByIdAndUpdate(
+      req.params.thoughtId,
+      { $pull: { reactions: { _id: req.params.reactionId } } },
       { new: true }
     );
-    !thoughtData
-      ? res.status(404).json({ message: 'No thought found with that ID!' })
-      : res.json(thoughtData);
+
+    if (!thoughtData) {
+      return res
+        .status(404)
+        .json({ message: 'No thought found with that ID!' });
+    }
+
+    res.json(thoughtData);
   } catch (err) {
-    res.json(500).json(err);
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 }
 
