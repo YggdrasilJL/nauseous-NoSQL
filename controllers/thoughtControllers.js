@@ -67,10 +67,45 @@ async function deleteThought(req, res) {
   }
 }
 
+// reactions
+
+async function createReaction(req, res) {
+  try {
+    // using add to set instead of push because addtoset doesnt allow duplications
+    const thoughtData = await Thought.findOneAndUpdate(
+      { _id: req.params.thoughtId },
+      { $addToSet: { reactions: req.body } },
+      { new: true }
+    );
+    !thoughtData
+      ? res.status(404).json({ message: 'No thought found with that ID!' })
+      : res.json(thoughtData);
+  } catch (err) {
+    res.json(500).json(err);
+  }
+}
+
+async function deleteReaction(req, res) {
+  try {
+    const thoughtData = await Thought.findOneAndUpdate(
+      { _id: req.params.thoughtId },
+      { $pull: { reactions: { reactionId: req.params.reactionId } } },
+      { new: true }
+    );
+    !thoughtData
+      ? res.status(404).json({ message: 'No thought found with that ID!' })
+      : res.json(thoughtData);
+  } catch (err) {
+    res.json(500).json(err);
+  }
+}
+
 module.exports = {
   getAllThoughts,
   getSingleThought,
   createThought,
   updateThought,
   deleteThought,
+  createReaction,
+  deleteReaction,
 };

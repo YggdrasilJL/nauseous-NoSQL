@@ -2,6 +2,8 @@ const dayjs = require('dayjs');
 
 const { Schema, model } = require('mongoose');
 
+// reactions
+
 const reactionSchema = new Schema({
   reactionId: {
     type: Schema.Types.ObjectId,
@@ -23,6 +25,8 @@ const reactionSchema = new Schema({
     get: (createdAtDate) => dayjs(createdAtDate).format('YYYY-MM-DD'),
   },
 });
+
+// thoughts
 
 const thoughtSchema = new Schema(
   {
@@ -53,7 +57,7 @@ const thoughtSchema = new Schema(
 );
 
 thoughtSchema.virtual('reactionCount').get(function () {
-  return this.reactions.length;
+  return this.reactions ? this.reactions.length : 0;
 });
 
 const Thought = model('thought', thoughtSchema);

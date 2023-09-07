@@ -21,8 +21,15 @@ async function getSingleUser(req, res) {
 
 async function createUser(req, res) {
   try {
-    const newUser = await User.create(req.body);
-    res.status(200).json({ message: 'User created!', newUser });
+    const existingUser = User.findOne({ username: req.body.username });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: 'Username is already taken.', existingUser });
+    } else {
+      const newUser = await User.create(req.body);
+      res.status(200).json({ message: 'User created!', newUser });
+    }
   } catch (err) {
     res.status(500).json(err);
   }
@@ -49,10 +56,58 @@ async function deleteUser(req, res) {
   }
 }
 
+async function addFriend(req, res) {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $addToSet: { friends: req.params.friendId } },
+      { new: true }
+    );
+
+    const updatedUser2 = await User.findByIdAndUpdate(
+      req.params.friendId,
+      { $addToSet: { friends: req.params.userId } },
+      { new: true }
+    );
+
+    if (!updatedUser || !updatedUser2) {
+      return res.status(404).json({ message: 'User or friend not found!' });
+    }
+    res.status(200).json({ message: 'Friend added!', updatedUser });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+}
+
+async function removeFriend(req, res) {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $pull: { friends: req.params.friendId } },
+      { new: true }
+    );
+
+    const updatedUser2 = await User.findByIdAndUpdate(
+      req.params.friendId,
+      { $pull: { friends: req.params.userId } },
+      { new: true }
+    );
+
+    if (!updatedUser || !updatedUser2) {
+      return res.status(404).json({ message: 'User or friend not found!' });
+    }
+    res.status(200).json({ message: 'Friend removed!', updatedUser });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+}
+
 module.exports = {
   getAllUsers,
   getSingleUser,
   createUser,
   updateUser,
   deleteUser,
+  addFriend,
+  removeFriend,
 };
