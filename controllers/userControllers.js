@@ -1,5 +1,4 @@
-const User = require('../models/User');
-const Thought = require('../models/Thought');
+const { User, Thought } = require('../models/index');
 
 async function getAllUsers(req, res) {
   try {
@@ -21,15 +20,12 @@ async function getSingleUser(req, res) {
 
 async function createUser(req, res) {
   try {
-    const existingUser = User.findOne({ username: req.body.username });
+    const existingUser = await User.findOne({ username: req.body.username });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: 'Username is already taken.', existingUser });
-    } else {
-      const newUser = await User.create(req.body);
-      res.status(200).json({ message: 'User created!', newUser });
+      return res.status(400).json({ message: 'Username is already taken.' });
     }
+    const newUser = await User.create(req.body);
+    res.status(200).json({ message: 'User created!', user: newUser });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -40,17 +36,17 @@ async function updateUser(req, res) {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    res.status(200).json({ message: 'User updated!', updatedUser });
+    res.status(200).json({ message: 'User updated!', user: updatedUser });
   } catch (err) {
     res.status(500).json(err);
   }
 }
-// delete user and their thoughts
+
 async function deleteUser(req, res) {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
-    await Thought.deleteMany(deletedUser.thoughts);
-    res.status(200).json({ message: 'User deleted!', deletedUser });
+    await Thought.deleteMany({ _id: { $in: deletedUser.thoughts } });
+    res.status(200).json({ message: 'User deleted!', user: deletedUser });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -58,22 +54,23 @@ async function deleteUser(req, res) {
 
 async function addFriend(req, res) {
   try {
+    const { userId, friendId } = req.params;
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.userId,
-      { $addToSet: { friends: req.params.friendId } },
+      userId,
+      { $addToSet: { friends: friendId } },
       { new: true }
     );
 
-    const updatedUser2 = await User.findByIdAndUpdate(
-      req.params.friendId,
-      { $addToSet: { friends: req.params.userId } },
+    const updatedFriend = await User.findByIdAndUpdate(
+      friendId,
+      { $addToSet: { friends: userId } },
       { new: true }
     );
 
-    if (!updatedUser || !updatedUser2) {
+    if (!updatedUser || !updatedFriend) {
       return res.status(404).json({ message: 'User or friend not found!' });
     }
-    res.status(200).json({ message: 'Friend added!', updatedUser });
+    res.status(200).json({ message: 'Friend added!', user: updatedUser });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -81,22 +78,23 @@ async function addFriend(req, res) {
 
 async function removeFriend(req, res) {
   try {
+    const { userId, friendId } = req.params;
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.userId,
-      { $pull: { friends: req.params.friendId } },
+      userId,
+      { $pull: { friends: friendId } },
       { new: true }
     );
 
-    const updatedUser2 = await User.findByIdAndUpdate(
-      req.params.friendId,
-      { $pull: { friends: req.params.userId } },
+    const updatedFriend = await User.findByIdAndUpdate(
+      friendId,
+      { $pull: { friends: userId } },
       { new: true }
     );
 
-    if (!updatedUser || !updatedUser2) {
+    if (!updatedUser || !updatedFriend) {
       return res.status(404).json({ message: 'User or friend not found!' });
     }
-    res.status(200).json({ message: 'Friend removed!', updatedUser });
+    res.status(200).json({ message: 'Friend removed!', user: updatedUser });
   } catch (err) {
     res.status(500).json(err);
   }
